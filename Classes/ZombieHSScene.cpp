@@ -54,7 +54,6 @@ extern char floorMap[FLOOR_WIDTH][FLOOR_HEIGHT];
 #define TBD (-1)
 #define WALL 0
 #define HALL 1
-#define KNIFE 2
 
 /*
  * check if it is
@@ -146,8 +145,7 @@ bool oneWayToGoRule(int x, int y)
 	count = 0;
 	for (int i = 0; i < 4; i++)
 	{
-		if (floorMap[x + cos4R[i]][y + sin4R[i]] == HALL
-		 || floorMap[x + cos4R[i]][y + sin4R[i]] == KNIFE)
+		if (floorMap[x + cos4R[i]][y + sin4R[i]] == HALL)
 		{
 			count++;
 		}
@@ -342,10 +340,11 @@ void move()
 					Director::getInstance()->replaceScene(ZombieHSScene::create());
 					return;
 				}
-				if (floorMap[x][y] == KNIFE && arsenal < MAX_ARSENAL)
+				if (removables[x][y] != nullptr && arsenal < MAX_ARSENAL)
 				{
 					floorMap[x][y] = HALL;
 					removables[x][y]->setVisible(false);
+					removables[x][y] = nullptr; // leave it to ZombieHSScene
 					knives[arsenal++]->setVisible(true);
 				}
 				hero->busy = false;
@@ -479,7 +478,6 @@ bool ZombieHSScene::init()
 					removables[x][y] = Sprite::create("knife.png");
 					removables[x][y]->setPosition(Vec2(origin.x + x * UNIT, origin.y + y * UNIT));
 					this->addChild(removables[x][y], 0);
-					floorMap[x][y] = KNIFE;
 				}
 				break;
 			}
