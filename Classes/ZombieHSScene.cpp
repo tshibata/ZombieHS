@@ -191,6 +191,8 @@ bool digBypass()
 	return true;
 }
 
+int stageIndex = 1;
+
 #define MAX_ARSENAL 10
 Sprite * knives[MAX_ARSENAL];
 int arsenal = 5;
@@ -386,13 +388,14 @@ bool ZombieHSScene::init()
 		return false;
 	}
 
-	auto visibleSize = Director::getInstance()->getVisibleSize();
 	Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
-	auto label = Label::createWithTTF("ZombieHS", "fonts/arial.ttf", 48);
+	char buf[10];
+	snprintf(buf, sizeof(buf), "Stage%d", stageIndex++);
+	auto label = Label::createWithTTF(buf, "fonts/arial.ttf", 24);
 	label->setTextColor(Color4B::BLACK);
 	label->setPosition(Vec2(origin.x + (7 * UNIT) + label->getContentSize().width / 2,
-		origin.y + visibleSize.height - label->getContentSize().height / 2));
+		origin.y + (FLOOR_HEIGHT - 2) * UNIT));
 	this->addChild(label, 1000);
 
 	for (int y = 0; y < FLOOR_HEIGHT; y++)
