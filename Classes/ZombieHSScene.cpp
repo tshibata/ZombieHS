@@ -30,10 +30,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdlib.h>
 
-#define FLOOR_WIDTH 16
-#define FLOOR_HEIGHT 11
+#define FLOOR_WIDTH 17
+#define FLOOR_HEIGHT 12
 
-#define UNIT 32
+#define UNIT 30
 
 #define E 0 // east
 #define N 1 // north
@@ -393,7 +393,7 @@ bool ZombieHSScene::init()
 	label->setTextColor(Color4B::BLACK);
 	label->setPosition(Vec2(origin.x + (7 * UNIT) + label->getContentSize().width / 2,
 		origin.y + visibleSize.height - label->getContentSize().height / 2));
-	this->addChild(label, 1);
+	this->addChild(label, 1000);
 
 	for (int y = 0; y < FLOOR_HEIGHT; y++)
 	{
@@ -464,20 +464,20 @@ bool ZombieHSScene::init()
 				{
 					auto sprite = Sprite::create("wall.png");
 					sprite->setPosition(Vec2(origin.x + x * UNIT, origin.y + y * UNIT));
-					this->addChild(sprite, 0);
+					this->addChild(sprite, 1000 - y * UNIT);
 				}
 				break;
 			case HALL:
 				{
 					auto sprite = Sprite::create("floor.png");
 					sprite->setPosition(Vec2(origin.x + x * UNIT, origin.y + y * UNIT));
-					this->addChild(sprite, 0);
+					this->addChild(sprite, 1000 - y * UNIT);
 				}
 				if (oneWayToGoRule(x, y) && 0 < y && y < FLOOR_HEIGHT - 2)
 				{
 					removables[x][y] = Sprite::create("knife.png");
 					removables[x][y]->setPosition(Vec2(origin.x + x * UNIT, origin.y + y * UNIT));
-					this->addChild(removables[x][y], 0);
+					this->addChild(removables[x][y], 1001 - y * UNIT);
 				}
 				break;
 			}
@@ -487,7 +487,7 @@ bool ZombieHSScene::init()
 	{
 		auto sprite = Sprite::create("floor.png");
 		sprite->setPosition(Vec2(origin.x + x * UNIT, origin.y + (FLOOR_HEIGHT - 1) * UNIT));
-		this->addChild(sprite, 0);
+		this->addChild(sprite, 1000 - (FLOOR_HEIGHT - 1) * UNIT);
 	}
 
 	// display the weapons.
@@ -496,7 +496,7 @@ bool ZombieHSScene::init()
 		knives[i] = Sprite::create("knife.png");
 		knives[i]->setPosition(Vec2(origin.x + (i + 4) * (UNIT / 2), origin.y + (FLOOR_HEIGHT - 2) * UNIT));
 		knives[i]->setVisible(false);
-		this->addChild(knives[i], 0);
+		this->addChild(knives[i], 1000);
 	}
 	for (int i = 0; i < arsenal; i ++)
 	{
@@ -524,7 +524,7 @@ bool ZombieHSScene::init()
 				 || rand() % 10 == 0 /* rarely crouded */)
 				{
 					mobs[i] = new Zombie(UNIT * x, UNIT * y, 0, mobPlists[i], 4, 0.05f);
-					this->addChild(mobs[i]->s, 2);
+					this->addChild(mobs[i]->s, 1016 - UNIT * y);
 					ramble(mobs[i]);
 					density[x][y]++;
 					break;
@@ -535,7 +535,7 @@ bool ZombieHSScene::init()
 
 	// put the hero.
 	hero = new Hero(UNIT * 1, UNIT * (FLOOR_HEIGHT - 1), 3, "danshi04", 4, 0.075f);
-	this->addChild(hero->s, 2);
+	this->addChild(hero->s, 1016 - UNIT * (FLOOR_HEIGHT - 1));
 	move();
 
 	// prepare for key events.
@@ -603,10 +603,11 @@ bool ZombieHSScene::init()
 void ZombieHSScene::update(float delta)
 {
 	auto v1 = hero->s->getPosition();
+	hero->s->setLocalZOrder(1016 - (int) v1.y);
 	for (int i = 0; i < 4; i++)
 	{
 		auto v2 = mobs[i]->s->getPosition();
-		mobs[i]->s->setLocalZOrder(1000 - (int) v2.y);
+		mobs[i]->s->setLocalZOrder(1016 - (int) v2.y);
 		if (mobs[i]->s->isVisible() && abs(v1.x - v2.x) + abs(v1.y - v2.y) < UNIT / 2)
 		{
 			if (0 < arsenal)
