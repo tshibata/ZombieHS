@@ -25,55 +25,17 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#include "AppDelegate.h"
-#include "ZombieHSScene.h"
+#ifndef __ZOMBIE_HS_SCENE_H__
+#define __ZOMBIE_HS_SCENE_H__
 
-USING_NS_CC;
+#include "cocos2d.h"
 
-static int designWidth = 480;
-static int designHeight = 320;
-
-AppDelegate::AppDelegate()
+class ZombieHSScene : public cocos2d::Scene
 {
-}
+public:
+	virtual bool init();
+	void update(float delta);
+	CREATE_FUNC(ZombieHSScene);
+};
 
-AppDelegate::~AppDelegate() 
-{
-}
-
-void AppDelegate::initGLContextAttrs()
-{
-	GLContextAttrs glContextAttrs = {8, 8, 8, 8, 24, 8, 0};
-	GLView::setGLContextAttrs(glContextAttrs);
-}
-
-bool AppDelegate::applicationDidFinishLaunching()
-{
-	auto director = Director::getInstance();
-
-	if (! director->getOpenGLView())
-	{
-#if (CC_TARGET_PLATFORM == CC_PLATFORM_LINUX) || (CC_TARGET_PLATFORM == CC_PLATFORM_MAC) || (CC_TARGET_PLATFORM == CC_PLATFORM_WIN32)
-		director->setOpenGLView(GLViewImpl::createWithRect("ZombieHS", cocos2d::Rect(0, 0, designWidth, designHeight)));
-#else
-		director->setOpenGLView(GLViewImpl::create("ZombieHS"));
-#endif
-	}
-	director->getOpenGLView()->setDesignResolutionSize(designWidth, designHeight, ResolutionPolicy::NO_BORDER);
-	director->setContentScaleFactor(1.0f);
-	director->setAnimationInterval(1.0f / 60);
-	director->runWithScene(ZombieHSScene::create());
-	//director->setDisplayStats(true);
-
-	return true;
-}
-
-void AppDelegate::applicationDidEnterBackground()
-{
-	Director::getInstance()->stopAnimation();
-}
-
-void AppDelegate::applicationWillEnterForeground()
-{
-	Director::getInstance()->startAnimation();
-}
+#endif // __ZOMBIE_HS_SCENE_H__
