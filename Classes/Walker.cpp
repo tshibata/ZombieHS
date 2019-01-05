@@ -31,6 +31,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int arrowKeys[4] = {0, 0, 0, 0};
 
+int keys;
+
 Sprite * knives[MAX_ARSENAL];
 int arsenal = 5;
 
@@ -56,7 +58,7 @@ Walker::Walker(int x, int y, int d, const char * prefix, int count, float delay)
 	this->d = d;
 	s = Sprite::create();
 	s->retain();
-	s->setPosition(Vec2(origin.x + x, origin.y + y));
+	s->setPosition(Vec2(origin.x + x, origin.y + y + Y_OFFSET));
 	snprintf(buf, sizeof(buf), "%s.plist", prefix);
 	cache->addSpriteFramesWithFile(buf);
 	for (int i = 0; i < 4; i++)
@@ -87,8 +89,8 @@ void Hero::move()
 	auto origin = Director::getInstance()->getVisibleOrigin();
 	auto pos = s->getPosition();
 	int x = (int) (pos.x - origin.x) / UNIT;
-	int y = (int) (pos.y - origin.y) / UNIT;
-	if (! busy && floorMap[x + cos4R[d]][y + sin4R[d]] != WALL)
+	int y = (int) (pos.y - origin.y - Y_OFFSET) / UNIT;
+	if (! busy && cells[x + cos4R[d]][y + sin4R[d]] != WALL)
 	{
 		busy = true;
 		auto animation = a[d];
@@ -101,18 +103,18 @@ void Hero::move()
 				auto origin = Director::getInstance()->getVisibleOrigin();
 				auto pos = s->getPosition();
 				int x = (int) (pos.x - origin.x) / UNIT;
-				int y = (int) (pos.y - origin.y) / UNIT;
-				if (y <= 0)
+				int y = (int) (pos.y - origin.y - Y_OFFSET) / UNIT;
+				if (y <= 1 && keys <= 0)
 				{
 					Director::getInstance()->replaceScene(ZombieHSScene::create());
 					return;
 				}
-				if (removables[x][y] != nullptr && arsenal < MAX_ARSENAL)
+				if (traps[x][y] != nullptr)
 				{
-					floorMap[x][y] = HALL;
-					removables[x][y]->setVisible(false);
-					removables[x][y] = nullptr; // leave it to ZombieHSScene
-					knives[arsenal++]->setVisible(true);
+					if (traps[x][y]())
+					{
+						traps[x][y] = nullptr;
+					}
 				}
 				busy = false;
 				if (arrowKeys[E] - arrowKeys[W] != 0)
@@ -153,8 +155,8 @@ void Zombie::move()
 	auto origin = Director::getInstance()->getVisibleOrigin();
 	auto pos = s->getPosition();
 	int x = (int) (pos.x - origin.x) / UNIT;
-	int y = (int) (pos.y - origin.y) / UNIT;
-	if ((int) pos.x % UNIT == 0 && floorMap[x + cos4R[d]][y + sin4R[d]] == WALL)
+	int y = (int) (pos.y - origin.y - Y_OFFSET) / UNIT;
+	if ((int) pos.x % UNIT == 0 && cells[x + cos4R[d]][y + sin4R[d]] == WALL)
 	{
 		d = turnLeft(d, 2);
 	}

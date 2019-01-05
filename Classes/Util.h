@@ -32,9 +32,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 USING_NS_CC;
 
 #define FLOOR_WIDTH 17
-#define FLOOR_HEIGHT 12
+#define FLOOR_HEIGHT 13
 
 #define UNIT 30
+
+#define Y_OFFSET (-30)
 
 #define E 0 // east
 #define N 1 // north
@@ -85,11 +87,11 @@ bool digBypass();
  * 0: wall
  * 1: passage
  */
-extern char floorMap[FLOOR_WIDTH][FLOOR_HEIGHT];
+extern char cells[FLOOR_WIDTH][FLOOR_HEIGHT];
 
 /*
- * removable items on the ground.
+ * reactions against the hero.
  */
-extern Sprite * removables[FLOOR_WIDTH][FLOOR_HEIGHT];
+extern std::function<bool()> traps[FLOOR_WIDTH][FLOOR_HEIGHT];
 
 #endif // __ZOMBIE_HS__UTIL_H__

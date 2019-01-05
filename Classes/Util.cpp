@@ -30,9 +30,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 int cos4R[] = {+1, 0, -1, 0};
 int sin4R[] = {0, +1, 0, -1};
 
-char floorMap[FLOOR_WIDTH][FLOOR_HEIGHT];
+char cells[FLOOR_WIDTH][FLOOR_HEIGHT];
 
-Sprite * removables[FLOOR_WIDTH][FLOOR_HEIGHT];
+std::function<bool()> traps[FLOOR_WIDTH][FLOOR_HEIGHT] = {nullptr};
 
 int turnLeft(int origin, int offset)
 {
@@ -71,8 +71,8 @@ bool noMoreNoLessRule(int x, int y)
 	{
 		for (int dx = -1; dx < 1; dx++)
 		{
-			if (floorMap[x + dx][y + dy] == floorMap[x + dx + 1][y + dy + 1]
-			 && floorMap[x + dx + 1][y + dy] == floorMap[x + dx][y + dy + 1])
+			if (cells[x + dx][y + dy] == cells[x + dx + 1][y + dy + 1]
+			 && cells[x + dx + 1][y + dy] == cells[x + dx][y + dy + 1])
 			{
 				return false;
 			}
@@ -87,7 +87,7 @@ bool oneWayToGoRule(int x, int y)
 	count = 0;
 	for (int i = 0; i < 4; i++)
 	{
-		if (floorMap[x + cos4R[i]][y + sin4R[i]] == HALL)
+		if (cells[x + cos4R[i]][y + sin4R[i]] == HALL)
 		{
 			count++;
 		}
@@ -97,9 +97,9 @@ bool oneWayToGoRule(int x, int y)
 
 void dig(int x, int y)
 {
-	if (floorMap[x][y] == TBD)
+	if (cells[x][y] == TBD)
 	{
-		floorMap[x][y] = 1;
+		cells[x][y] = 1;
 		if (oneWayToGoRule(x, y) && noMoreNoLessRule(x, y))
 		{
 			int dirs[] = {0, 1, 2, 3};
@@ -112,7 +112,7 @@ void dig(int x, int y)
 		}
 		else
 		{
-			floorMap[x][y] = TBD;
+			cells[x][y] = TBD;
 		}
 	}
 }
@@ -121,12 +121,12 @@ bool digBypass()
 {
 	int x = rand() % (FLOOR_WIDTH - 2) + 1;
 	int y = rand() % (FLOOR_HEIGHT - 2) + 1;
-	if (floorMap[x][y] == TBD && noMoreNoLessRule(x, y))
+	if (cells[x][y] == TBD && noMoreNoLessRule(x, y))
 	{
-		floorMap[x][y] = 1;
+		cells[x][y] = 1;
 		if (! noMoreNoLessRule(x, y))
 		{
-			floorMap[x][y] = TBD;
+			cells[x][y] = TBD;
 			return false;
 		}
 	}

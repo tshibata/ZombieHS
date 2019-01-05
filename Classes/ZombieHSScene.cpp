@@ -31,6 +31,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int stageIndex = 1;
 
+Sprite * gate;
+
 Hero * hero;
 
 Zombie * mobs[4];
@@ -51,27 +53,28 @@ bool ZombieHSScene::init()
 
 	Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
+	keys = 0;
 	char buf[10];
 	snprintf(buf, sizeof(buf), "Stage%d", stageIndex++);
 	auto label = Label::createWithTTF(buf, "fonts/arial.ttf", 24);
 	label->setTextColor(Color4B::BLACK);
 	label->setPosition(Vec2(origin.x + (7 * UNIT) + label->getContentSize().width / 2,
-		origin.y + (FLOOR_HEIGHT - 2) * UNIT));
+		origin.y + (FLOOR_HEIGHT - 2) * UNIT + Y_OFFSET));
 	this->addChild(label, 1000);
 
 	for (int y = 0; y < FLOOR_HEIGHT; y++)
 	{
 		for (int x = 0; x < FLOOR_WIDTH; x++)
 		{
-			floorMap[x][y] = WALL;
-			removables[x][y] = nullptr;
+			cells[x][y] = WALL;
+			traps[x][y] = nullptr;
 		}
 	}
-	for (int y = 1; y < FLOOR_HEIGHT - 2; y++)
+	for (int y = 2; y < FLOOR_HEIGHT - 2; y++)
 	{
 		for (int x = 1; x < FLOOR_WIDTH - 1; x++)
 		{
-			floorMap[x][y] = TBD;
+			cells[x][y] = TBD;
 		}
 	}
 
@@ -79,7 +82,7 @@ bool ZombieHSScene::init()
 	printf("seed: %u\n", seed);
 	srand(seed);
 
-	floorMap[1][FLOOR_HEIGHT - 2] = HALL;
+	cells[1][FLOOR_HEIGHT - 2] = HALL;
 	dig(1, FLOOR_HEIGHT - 3);
 
 	// so far there is no circular route.
@@ -98,12 +101,12 @@ bool ZombieHSScene::init()
 			// just in case. it never happens, i believe.
 			exit(1);
 		}
-		if (floorMap[x][1] == HALL)
+		if (cells[x][2] == HALL)
 		{
-			floorMap[x][0] = HALL;
-			auto sprite = Sprite::create("gate.png");
-			sprite->setPosition(Vec2(origin.x + x * UNIT, origin.y));
-			this->addChild(sprite, 1016);
+			cells[x][1] = HALL;
+			gate = Sprite::create("gate.png");
+			gate->setPosition(Vec2(origin.x + x * UNIT, origin.y + UNIT + Y_OFFSET));
+			this->addChild(gate, 1017 - UNIT);
 			break;
 		}
 	}
@@ -113,9 +116,9 @@ bool ZombieHSScene::init()
 	{
 		for (int x = 0; x < FLOOR_WIDTH; x++)
 		{
-			if (floorMap[x][y] == TBD)
+			if (cells[x][y] == TBD)
 			{
-				floorMap[x][y] = WALL;
+				cells[x][y] = WALL;
 			}
 		}
 	}
@@ -125,26 +128,56 @@ bool ZombieHSScene::init()
 	{
 		for (int x = 0; x < FLOOR_WIDTH; x++)
 		{
-			switch (floorMap[x][y])
+			switch (cells[x][y])
 			{
 			case WALL:
 				{
 					auto sprite = Sprite::create("wall.png");
-					sprite->setPosition(Vec2(origin.x + x * UNIT, origin.y + y * UNIT));
+					sprite->setPosition(Vec2(origin.x + x * UNIT, origin.y + y * UNIT + Y_OFFSET));
 					this->addChild(sprite, 1000 - y * UNIT);
 				}
 				break;
 			case HALL:
 				{
 					auto sprite = Sprite::create("floor.png");
-					sprite->setPosition(Vec2(origin.x + x * UNIT, origin.y + y * UNIT));
+					sprite->setPosition(Vec2(origin.x + x * UNIT, origin.y + y * UNIT + Y_OFFSET));
 					this->addChild(sprite, 1000 - y * UNIT);
 				}
-				if (oneWayToGoRule(x, y) && 0 < y && y < FLOOR_HEIGHT - 2)
+				if (oneWayToGoRule(x, y) && 1 < y && y < FLOOR_HEIGHT - 2)
 				{
-					removables[x][y] = Sprite::create("knife.png");
-					removables[x][y]->setPosition(Vec2(origin.x + x * UNIT, origin.y + y * UNIT));
-					this->addChild(removables[x][y], 1001 - y * UNIT);
+					if (rand() % 2 < 1)
+					{
+						auto sprite = Sprite::create("knife.png");
+						traps[x][y] = [sprite]()
+						{
+							if (arsenal < MAX_ARSENAL)
+							{
+								sprite->setVisible(false);
+								knives[arsenal++]->setVisible(true);
+								return true;
+							}
+							return false;
+						};
+						sprite->setPosition(Vec2(origin.x + x * UNIT, origin.y + y * UNIT + Y_OFFSET));
+						this->addChild(sprite, 1001 - y * UNIT);
+					}
+					else
+					{
+						auto sprite = Sprite::create("key.png");
+						traps[x][y] = [sprite]()
+						{
+							sprite->setVisible(false);
+							keys--;
+							if (keys <= 0)
+							{
+								gate->setVisible(false);
+							}
+							return true;
+						};
+						sprite->setPosition(Vec2(origin.x + x * UNIT, origin.y + y * UNIT + Y_OFFSET));
+						this->addChild(sprite, 1001 - y * UNIT);
+						keys++;
+					}
 				}
 				break;
 			}
@@ -153,15 +186,19 @@ bool ZombieHSScene::init()
 	for (int x = 0; x < FLOOR_WIDTH; x++)
 	{
 		auto sprite = Sprite::create("floor.png");
-		sprite->setPosition(Vec2(origin.x + x * UNIT, origin.y + (FLOOR_HEIGHT - 1) * UNIT));
+		sprite->setPosition(Vec2(origin.x + x * UNIT, origin.y + (FLOOR_HEIGHT - 1) * UNIT + Y_OFFSET));
 		this->addChild(sprite, 1000 - (FLOOR_HEIGHT - 1) * UNIT);
+	}
+	if (keys <= 0)
+	{
+		gate->setVisible(false);
 	}
 
 	// display the weapons.
 	for (int i = 0; i < MAX_ARSENAL; i ++)
 	{
 		knives[i] = Sprite::create("knife.png");
-		knives[i]->setPosition(Vec2(origin.x + (i + 4) * (UNIT / 2), origin.y + (FLOOR_HEIGHT - 2) * UNIT));
+		knives[i]->setPosition(Vec2(origin.x + (i + 4) * (UNIT / 2), origin.y + (FLOOR_HEIGHT - 2) * UNIT + Y_OFFSET));
 		knives[i]->setVisible(false);
 		this->addChild(knives[i], 1000);
 	}
@@ -185,7 +222,7 @@ bool ZombieHSScene::init()
 		{
 			int x = rand() % (FLOOR_WIDTH - 2) + 1;
 			int y = rand() % (FLOOR_HEIGHT - 2) + 1;
-			if (floorMap[x - 1][y] != WALL && floorMap[x][y] != WALL && floorMap[x + 1][y] != WALL)
+			if (cells[x - 1][y] != WALL && cells[x][y] != WALL && cells[x + 1][y] != WALL)
 			{
 			 	if ((density[x - 1][y] == 0 && density[x][y] == 0 && density[x + 1][y] == 0)
 				 || rand() % 10 == 0 /* rarely crouded */)
@@ -266,11 +303,11 @@ bool ZombieHSScene::init()
 void ZombieHSScene::update(float delta)
 {
 	auto v1 = hero->s->getPosition();
-	hero->s->setLocalZOrder(1016 - (int) v1.y);
+	hero->s->setLocalZOrder(1016 - ((int) v1.y - Y_OFFSET));
 	for (int i = 0; i < 4; i++)
 	{
 		auto v2 = mobs[i]->s->getPosition();
-		mobs[i]->s->setLocalZOrder(1016 - (int) v2.y);
+		mobs[i]->s->setLocalZOrder(1016 - ((int) v2.y - Y_OFFSET));
 		if (mobs[i]->s->isVisible() && abs(v1.x - v2.x) + abs(v1.y - v2.y) < UNIT / 2)
 		{
 			if (0 < arsenal)
