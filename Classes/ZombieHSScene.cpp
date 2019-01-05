@@ -440,6 +440,9 @@ bool ZombieHSScene::init()
 		if (floorMap[x][1] == HALL)
 		{
 			floorMap[x][0] = HALL;
+			auto sprite = Sprite::create("gate.png");
+			sprite->setPosition(Vec2(origin.x + x * UNIT, origin.y));
+			this->addChild(sprite, 1016);
 			break;
 		}
 	}
