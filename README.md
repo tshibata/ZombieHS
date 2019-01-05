@@ -3,7 +3,7 @@
 Well, I just wanted to give cocos2d-x a try.
 I guess it is portable but I verified only on Linux.
 ## How to set up
-$ git submodule update --init --recursive
+$ git submodule update --init --recursive --progress
 
 $ pushd cocos2d/
 
