@@ -25,18 +25,71 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef __ZOMBIE_HS_SCENE_H__
-#define __ZOMBIE_HS_SCENE_H__
+#ifndef __ZOMBIE_HS__UTIL_H__
+#define __ZOMBIE_HS__UTIL_H__
 
 #include "cocos2d.h"
 USING_NS_CC;
 
-class ZombieHSScene : public cocos2d::Scene
-{
-public:
-	virtual bool init();
-	void update(float delta);
-	CREATE_FUNC(ZombieHSScene);
-};
+#define FLOOR_WIDTH 17
+#define FLOOR_HEIGHT 12
 
-#endif // __ZOMBIE_HS_SCENE_H__
+#define UNIT 30
+
+#define E 0 // east
+#define N 1 // north
+#define W 2 // west
+#define S 3 // south
+
+#define TBD (-1) // to be determined
+#define WALL 0 // not able to go through
+#define HALL 1 // able to go through
+
+extern int cos4R[4]; // cosine for R
+extern int sin4R[4]; // sine for R
+
+/*
+ * direction of a relative coordinate.
+ */
+int direction(int dx, int dy);
+
+/*
+ * direction of the left hand, or the right when offset is negative.
+ */
+int turnLeft(int origin, int offset);
+
+/*
+ * check if it is
+ * - not a part of wide room or thick wall
+ * - not by a thin point of wall
+ */
+bool noMoreNoLessRule(int x, int y);
+
+/*
+ * check if there is only one passage around.
+ */
+bool oneWayToGoRule(int x, int y);
+
+/*
+ * make passages without bypass.
+ */
+void dig(int x, int y);
+
+/*
+ * try to make a bypass.
+ */
+bool digBypass();
+
+/*
+ * -1: to be determined
+ * 0: wall
+ * 1: passage
+ */
+extern char floorMap[FLOOR_WIDTH][FLOOR_HEIGHT];
+
+/*
+ * removable items on the ground.
+ */
+extern Sprite * removables[FLOOR_WIDTH][FLOOR_HEIGHT];
+
+#endif // __ZOMBIE_HS__UTIL_H__

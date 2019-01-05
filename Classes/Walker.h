@@ -25,18 +25,41 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef __ZOMBIE_HS_SCENE_H__
-#define __ZOMBIE_HS_SCENE_H__
+#ifndef __ZOMBIE_HS__WALKER_H__
+#define __ZOMBIE_HS__WALKER_H__
 
 #include "cocos2d.h"
 USING_NS_CC;
 
-class ZombieHSScene : public cocos2d::Scene
+extern int arrowKeys[];
+
+#define MAX_ARSENAL 10
+extern Sprite * knives[];
+extern int arsenal;
+
+class Walker
 {
 public:
-	virtual bool init();
-	void update(float delta);
-	CREATE_FUNC(ZombieHSScene);
+	int d;
+	Sprite * s;
+	Animation * a[4];
+	Walker(int x, int y, int d, const char * prefix, int count, float delay);
+	virtual ~Walker();
 };
 
-#endif // __ZOMBIE_HS_SCENE_H__
+class Hero : public Walker
+{
+public:
+	bool busy;
+	Hero(int x, int y, int d, const char * prefix, int count, float delay);
+	void move();
+};
+
+class Zombie : public Walker
+{
+public:
+	Zombie(int x, int y, int d, const char * prefix, int count, float delay);
+	void move();
+};
+
+#endif // __ZOMBIE_HS__WALKER_H__

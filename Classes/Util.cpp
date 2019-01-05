@@ -25,18 +25,111 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef __ZOMBIE_HS_SCENE_H__
-#define __ZOMBIE_HS_SCENE_H__
+#include "Util.h"
 
-#include "cocos2d.h"
-USING_NS_CC;
+int cos4R[] = {+1, 0, -1, 0};
+int sin4R[] = {0, +1, 0, -1};
 
-class ZombieHSScene : public cocos2d::Scene
+char floorMap[FLOOR_WIDTH][FLOOR_HEIGHT];
+
+Sprite * removables[FLOOR_WIDTH][FLOOR_HEIGHT];
+
+int turnLeft(int origin, int offset)
 {
-public:
-	virtual bool init();
-	void update(float delta);
-	CREATE_FUNC(ZombieHSScene);
-};
+	return (origin + offset) & 3;
+}
 
-#endif // __ZOMBIE_HS_SCENE_H__
+int direction(int dx, int dy)
+{
+	if (abs(dx) > abs(dy))
+	{
+		if (dx < 0)
+		{
+			return W;
+		}
+		else
+		{
+			return E;
+		}
+	}
+	else
+	{
+		if (dy < 0)
+		{
+			return S;
+		}
+		else
+		{
+			return N;
+		}
+	}
+}
+
+bool noMoreNoLessRule(int x, int y)
+{
+	for (int dy = -1; dy < 1; dy++)
+	{
+		for (int dx = -1; dx < 1; dx++)
+		{
+			if (floorMap[x + dx][y + dy] == floorMap[x + dx + 1][y + dy + 1]
+			 && floorMap[x + dx + 1][y + dy] == floorMap[x + dx][y + dy + 1])
+			{
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+bool oneWayToGoRule(int x, int y)
+{
+	int count;
+	count = 0;
+	for (int i = 0; i < 4; i++)
+	{
+		if (floorMap[x + cos4R[i]][y + sin4R[i]] == HALL)
+		{
+			count++;
+		}
+	}
+	return count == 1;
+}
+
+void dig(int x, int y)
+{
+	if (floorMap[x][y] == TBD)
+	{
+		floorMap[x][y] = 1;
+		if (oneWayToGoRule(x, y) && noMoreNoLessRule(x, y))
+		{
+			int dirs[] = {0, 1, 2, 3};
+			for (int i = 4; 0 < i; i--)
+			{
+				int r = rand() % i;
+				dig(x + cos4R[dirs[r]], y + sin4R[dirs[r]]);
+				dirs[r] = dirs[i - 1];
+			}
+		}
+		else
+		{
+			floorMap[x][y] = TBD;
+		}
+	}
+}
+
+bool digBypass()
+{
+	int x = rand() % (FLOOR_WIDTH - 2) + 1;
+	int y = rand() % (FLOOR_HEIGHT - 2) + 1;
+	if (floorMap[x][y] == TBD && noMoreNoLessRule(x, y))
+	{
+		floorMap[x][y] = 1;
+		if (! noMoreNoLessRule(x, y))
+		{
+			floorMap[x][y] = TBD;
+			return false;
+		}
+	}
+	return true;
+}
+

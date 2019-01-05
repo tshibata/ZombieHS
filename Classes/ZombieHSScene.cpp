@@ -25,286 +25,11 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include "Util.h"
+#include "Walker.h"
 #include "ZombieHSScene.h"
-#include "SimpleAudioEngine.h"
-
-#include <stdlib.h>
-
-#define FLOOR_WIDTH 17
-#define FLOOR_HEIGHT 12
-
-#define UNIT 30
-
-#define E 0 // east
-#define N 1 // north
-#define W 2 // west
-#define S 3 // south
-
-int clockwise(int origin, int offset);
-
-int dir(int dx, int dy);
-
-/*
- * -1: to be determined
- * 0: wall
- * 1: passage
- */
-extern char floorMap[FLOOR_WIDTH][FLOOR_HEIGHT];
-
-#define TBD (-1)
-#define WALL 0
-#define HALL 1
-
-/*
- * check if it is
- * - not a part of wide room or thick wall
- * - not by a thin point of wall
- */
-bool noMoreNoLessRule(int x, int y);
-
-/*
- * check if there is only one passage around.
- */
-bool oneWayToGoRule(int x, int y);
-
-/*
- * make passages without bypass.
- */
-void dig(int x, int y);
-
-/*
- * try to make a bypass.
- */
-bool digBypass();
-
-
-USING_NS_CC;
-
-int cos4R[] = {+1, 0, -1, 0}; // cosine for R
-int sin4R[] = {0, +1, 0, -1}; // sine for R
-
-char floorMap[FLOOR_WIDTH][FLOOR_HEIGHT];
-Sprite * removables[FLOOR_WIDTH][FLOOR_HEIGHT];
-
-//bool arrowKeys[4] = {false, false, false, false};
-int keyLeft = 0;
-int keyRight = 0;
-int keyUp = 0;
-int keyDown = 0;
-
-int turnLeft(int origin, int offset)
-{
-	return (origin + offset) & 3;
-}
-
-int direction(int dx, int dy)
-{
-	if (abs(dx) > abs(dy))
-	{
-		if (dx < 0)
-		{
-			return W;
-		}
-		else
-		{
-			return E;
-		}
-	}
-	else
-	{
-		if (dy < 0)
-		{
-			return S;
-		}
-		else
-		{
-			return N;
-		}
-	}
-}
-
-bool noMoreNoLessRule(int x, int y)
-{
-	for (int dy = -1; dy < 1; dy++)
-	{
-		for (int dx = -1; dx < 1; dx++)
-		{
-			if (floorMap[x + dx][y + dy] == floorMap[x + dx + 1][y + dy + 1]
-			 && floorMap[x + dx + 1][y + dy] == floorMap[x + dx][y + dy + 1])
-			{
-				return false;
-			}
-		}
-	}
-	return true;
-}
-
-bool oneWayToGoRule(int x, int y)
-{
-	int count;
-	count = 0;
-	for (int i = 0; i < 4; i++)
-	{
-		if (floorMap[x + cos4R[i]][y + sin4R[i]] == HALL)
-		{
-			count++;
-		}
-	}
-	return count == 1;
-}
-
-void dig(int x, int y)
-{
-	if (floorMap[x][y] == TBD)
-	{
-		floorMap[x][y] = 1;
-		if (oneWayToGoRule(x, y) && noMoreNoLessRule(x, y))
-		{
-			int dirs[] = {0, 1, 2, 3};
-			for (int i = 4; 0 < i; i--)
-			{
-				int r = rand() % i;
-				dig(x + cos4R[dirs[r]], y + sin4R[dirs[r]]);
-				dirs[r] = dirs[i - 1];
-			}
-		}
-		else
-		{
-			floorMap[x][y] = TBD;
-		}
-	}
-}
-
-bool digBypass()
-{
-	int x = rand() % (FLOOR_WIDTH - 2) + 1;
-	int y = rand() % (FLOOR_HEIGHT - 2) + 1;
-	if (floorMap[x][y] == TBD && noMoreNoLessRule(x, y))
-	{
-		floorMap[x][y] = 1;
-		if (! noMoreNoLessRule(x, y))
-		{
-			floorMap[x][y] = TBD;
-			return false;
-		}
-	}
-	return true;
-}
 
 int stageIndex = 1;
-
-#define MAX_ARSENAL 10
-Sprite * knives[MAX_ARSENAL];
-int arsenal = 5;
-
-Animation * loadAnimation(const char * prefix, int count, float delay)
-{
-	char buf[100];
-	auto cache = CCSpriteFrameCache::getInstance();
-	auto a = Animation::create();
-	for (int i = 0; i < count; i++)
-	{
-		snprintf(buf, sizeof(buf), "%s%d.png", prefix, i);
-		a->addSpriteFrame(cache->getSpriteFrameByName(buf));
-	}
-	a->setDelayPerUnit(delay);
-	return a;
-}
-
-class Walker
-{
-public:
-	int d;
-	Sprite * s;
-	Animation * a[4];
-	Walker(int x, int y, int d, const char * prefix, int count, float delay);
-	virtual ~Walker();
-};
-
-Walker::Walker(int x, int y, int d, const char * prefix, int count, float delay)
-{
-	char buf[100];
-	auto origin = Director::getInstance()->getVisibleOrigin();
-	auto cache = CCSpriteFrameCache::getInstance();
-	this->d = d;
-	s = Sprite::create();
-	s->retain();
-	s->setPosition(Vec2(origin.x + x, origin.y + y));
-	snprintf(buf, sizeof(buf), "%s.plist", prefix);
-	cache->addSpriteFramesWithFile(buf);
-	for (int i = 0; i < 4; i++)
-	{
-		snprintf(buf, sizeof(buf), "%s%d", prefix, i);
-		a[i] = loadAnimation(buf, count, delay);
-		a[i]->retain();
-	}
-	s->setSpriteFrame(a[d]->getFrames().at(0)->getSpriteFrame());
-}
-
-Walker::~Walker()
-{
-	s->release();
-	for (int i = 0; i < 4; i++)
-	{
-		a[i]->release();
-	}
-}
-
-class Hero : public Walker
-{
-public:
-	bool busy;
-	Hero(int x, int y, int d, const char * prefix, int count, float delay);
-};
-
-Hero::Hero(int x, int y, int d, const char * prefix, int count, float delay) : Walker(x, y, d, prefix, count, delay)
-{
-	busy = false;
-}
-
-class Zombie : public Walker
-{
-public:
-	Zombie(int x, int y, int d, const char * prefix, int count, float delay);
-};
-
-Zombie::Zombie(int x, int y, int d, const char * prefix, int count, float delay) : Walker(x, y, d, prefix, count, delay)
-{
-}
-
-void ramble(Zombie * mob)
-{
-	auto origin = Director::getInstance()->getVisibleOrigin();
-	auto pos = mob->s->getPosition();
-	int x = (int) (pos.x - origin.x) / UNIT;
-	int y = (int) (pos.y - origin.y) / UNIT;
-	if ((int) pos.x % UNIT == 0 && floorMap[x + cos4R[mob->d]][y + sin4R[mob->d]] == WALL)
-	{
-		mob->d = turnLeft(mob->d, 2);
-	}
-	auto animation = mob->a[mob->d];
-	if (rand() % 2)
-	{
-		mob->s->runAction(Sequence::create(
-			Spawn::create(
-				Animate::create(animation),
-				MoveBy::create(animation->getDuration(), Vec2((UNIT / 2) * cos4R[mob->d], (UNIT / 2) * sin4R[mob->d])),
-				nullptr),
-			CallFunc::create([mob]() {
-				ramble(mob);
-			}),
-			nullptr));
-	}
-	else
-	{
-		mob->s->runAction(Sequence::create(
-			DelayTime::create(animation->getDuration()),
-			CallFunc::create([mob]() {
-				ramble(mob);
-			}),
-			nullptr));
-	}
-}
 
 Hero * hero;
 
@@ -316,70 +41,6 @@ const char * mobPlists[] = {
 	"joshi01",
 	"joshi02",
 };
-
-void move()
-{
-	auto origin = Director::getInstance()->getVisibleOrigin();
-	auto pos = hero->s->getPosition();
-	int x = (int) (pos.x - origin.x) / UNIT;
-	int y = (int) (pos.y - origin.y) / UNIT;
-	if (! hero->busy && floorMap[x + cos4R[hero->d]][y + sin4R[hero->d]] != WALL)
-	{
-		hero->busy = true;
-		auto animation = hero->a[hero->d];
-		hero->s->runAction(Sequence::create(
-			Spawn::create(
-				Repeat::create(Animate::create(animation), 2),
-				MoveBy::create(animation->getDuration() * 2, Vec2(UNIT * cos4R[hero->d], UNIT * sin4R[hero->d])),
-				nullptr),
-			CallFunc::create([]() {
-				auto origin = Director::getInstance()->getVisibleOrigin();
-				auto pos = hero->s->getPosition();
-				int x = (int) (pos.x - origin.x) / UNIT;
-				int y = (int) (pos.y - origin.y) / UNIT;
-				if (y <= 0)
-				{
-					Director::getInstance()->replaceScene(ZombieHSScene::create());
-					return;
-				}
-				if (removables[x][y] != nullptr && arsenal < MAX_ARSENAL)
-				{
-					floorMap[x][y] = HALL;
-					removables[x][y]->setVisible(false);
-					removables[x][y] = nullptr; // leave it to ZombieHSScene
-					knives[arsenal++]->setVisible(true);
-				}
-				hero->busy = false;
-				if (keyRight - keyLeft != 0)
-				{
-					if (keyRight != 0)
-					{
-						hero->d = 0;
-						move();
-					}
-					else
-					{
-						hero->d = 2;
-						move();
-					}
-				}
-				else if (keyUp - keyDown != 0)
-				{
-					if (keyUp != 0)
-					{
-						hero->d = 1;
-						move();
-					}
-					else
-					{
-						hero->d = 3;
-						move();
-					}
-				}
-			}),
-			nullptr));
-	}
-}
 
 bool ZombieHSScene::init()
 {
@@ -528,7 +189,7 @@ bool ZombieHSScene::init()
 				{
 					mobs[i] = new Zombie(UNIT * x, UNIT * y, 0, mobPlists[i], 4, 0.05f);
 					this->addChild(mobs[i]->s, 1016 - UNIT * y);
-					ramble(mobs[i]);
+					mobs[i]->move();
 					density[x][y]++;
 					break;
 				}
@@ -539,7 +200,7 @@ bool ZombieHSScene::init()
 	// put the hero.
 	hero = new Hero(UNIT * 1, UNIT * (FLOOR_HEIGHT - 1), 3, "danshi04", 4, 0.075f);
 	this->addChild(hero->s, 1016 - UNIT * (FLOOR_HEIGHT - 1));
-	move();
+	hero->move();
 
 	// prepare for key events.
 	auto listener = EventListenerKeyboard::create();
@@ -548,24 +209,20 @@ bool ZombieHSScene::init()
 		switch (keyCode)
 		{
 		case cocos2d::EventKeyboard::KeyCode::KEY_UP_ARROW:
-			keyUp = 1;
-			hero->d = 1;
-			move();
+			arrowKeys[hero->d = N] = 1;
+			hero->move();
 			break;
 		case cocos2d::EventKeyboard::KeyCode::KEY_DOWN_ARROW:
-			keyDown = 1;
-			hero->d = 3;
-			move();
+			arrowKeys[hero->d = S] = 1;
+			hero->move();
 			break;
 		case cocos2d::EventKeyboard::KeyCode::KEY_LEFT_ARROW:
-			keyLeft = 1;
-			hero->d = 2;
-			move();
+			arrowKeys[hero->d = W] = 1;
+			hero->move();
 			break;
 		case cocos2d::EventKeyboard::KeyCode::KEY_RIGHT_ARROW:
-			keyRight = 1;
-			hero->d = 0;
-			move();
+			arrowKeys[hero->d = E] = 1;
+			hero->move();
 			break;
 		default: // ignore others
 			break;
@@ -580,16 +237,16 @@ bool ZombieHSScene::init()
 			Director::getInstance()->end();
 			break;
 		case cocos2d::EventKeyboard::KeyCode::KEY_UP_ARROW:
-			keyUp = 0;
+			arrowKeys[N] = 0;
 			break;
 		case cocos2d::EventKeyboard::KeyCode::KEY_DOWN_ARROW:
-			keyDown = 0;
+			arrowKeys[S] = 0;
 			break;
 		case cocos2d::EventKeyboard::KeyCode::KEY_LEFT_ARROW:
-			keyLeft = 0;
+			arrowKeys[W] = 0;
 			break;
 		case cocos2d::EventKeyboard::KeyCode::KEY_RIGHT_ARROW:
-			keyRight = 0;
+			arrowKeys[E] = 0;
 			break;
 		default: // ignore others
 			break;
