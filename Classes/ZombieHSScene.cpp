@@ -53,7 +53,7 @@ bool ZombieHSScene::init()
 
 	Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
-	keys = 0;
+	secureness = 0;
 	char buf[10];
 	snprintf(buf, sizeof(buf), "Stage%d", stageIndex++);
 	auto label = Label::createWithTTF(buf, "fonts/arial.ttf", 24);
@@ -167,8 +167,8 @@ bool ZombieHSScene::init()
 						traps[x][y] = [sprite]()
 						{
 							sprite->setVisible(false);
-							keys--;
-							if (keys <= 0)
+							secureness--;
+							if (secureness <= 0)
 							{
 								gate->setVisible(false);
 							}
@@ -176,7 +176,7 @@ bool ZombieHSScene::init()
 						};
 						sprite->setPosition(Vec2(origin.x + x * UNIT, origin.y + y * UNIT + Y_OFFSET));
 						this->addChild(sprite, 1001 - y * UNIT);
-						keys++;
+						secureness++;
 					}
 				}
 				break;
@@ -189,7 +189,7 @@ bool ZombieHSScene::init()
 		sprite->setPosition(Vec2(origin.x + x * UNIT, origin.y + (FLOOR_HEIGHT - 1) * UNIT + Y_OFFSET));
 		this->addChild(sprite, 1000 - (FLOOR_HEIGHT - 1) * UNIT);
 	}
-	if (keys <= 0)
+	if (secureness <= 0)
 	{
 		gate->setVisible(false);
 	}

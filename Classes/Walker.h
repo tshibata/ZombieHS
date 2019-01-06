@@ -33,7 +33,7 @@ USING_NS_CC;
 
 extern int arrowKeys[];
 
-extern int keys;
+extern int secureness;
 
 #define MAX_ARSENAL 10
 extern Sprite * knives[];

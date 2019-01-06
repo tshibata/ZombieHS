@@ -31,7 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int arrowKeys[4] = {0, 0, 0, 0};
 
-int keys;
+int secureness;
 
 Sprite * knives[MAX_ARSENAL];
 int arsenal = 5;
@@ -104,7 +104,7 @@ void Hero::move()
 				auto pos = s->getPosition();
 				int x = (int) (pos.x - origin.x) / UNIT;
 				int y = (int) (pos.y - origin.y - Y_OFFSET) / UNIT;
-				if (y <= 1 && keys <= 0)
+				if (y <= 1 && secureness <= 0)
 				{
 					Director::getInstance()->replaceScene(ZombieHSScene::create());
 					return;
