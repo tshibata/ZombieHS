@@ -170,7 +170,7 @@ bool ZombieHSScene::init()
 							secureness--;
 							if (secureness <= 0)
 							{
-								gate->setVisible(false);
+								gate->runAction(CCFadeOut::create(0.5f));
 							}
 							return true;
 						};
