@@ -84,14 +84,19 @@ Hero::Hero(int x, int y, int d, const char * prefix, int count, float delay) : W
 	busy = false;
 }
 
-void Hero::move()
+bool Hero::move(int d2)
 {
 	auto origin = Director::getInstance()->getVisibleOrigin();
 	auto pos = s->getPosition();
 	int x = (int) (pos.x - origin.x) / UNIT;
 	int y = (int) (pos.y - origin.y - Y_OFFSET) / UNIT;
-	if (! busy && cells[x + cos4R[d]][y + sin4R[d]] != WALL)
+	if (busy || cells[x + cos4R[d2]][y + sin4R[d2]] == WALL)
 	{
+		return false;
+	}
+	else
+	{
+		d = d2;
 		busy = true;
 		auto animation = a[d];
 		s->runAction(Sequence::create(
@@ -117,32 +122,37 @@ void Hero::move()
 					}
 				}
 				busy = false;
-				if (arrowKeys[E] - arrowKeys[W] != 0)
+				if (arrowKeys[turnLeft(d, 1)] != arrowKeys[turnLeft(d, -1)])
 				{
-					if (arrowKeys[E] != 0)
+					if (arrowKeys[turnLeft(d, 1)] != 0)
 					{
-						d = E;
+						if (move(turnLeft(d, 1)))
+						{
+							return;
+						}
 					}
 					else
 					{
-						d = W;
+						if (move(turnLeft(d, -1)))
+						{
+							return;
+						}
 					}
-					move();
 				}
-				else if (arrowKeys[N] - arrowKeys[S] != 0)
+				if (arrowKeys[d] != arrowKeys[turnLeft(d, 2)])
 				{
-					if (arrowKeys[N] != 0)
+					if (arrowKeys[d] != 0)
 					{
-						d = N;
+						move(d);
 					}
 					else
 					{
-						d = S;
+						move(turnLeft(d, 2));
 					}
-					move();
 				}
 			}),
 			nullptr));
+		return true;
 	}
 }
 

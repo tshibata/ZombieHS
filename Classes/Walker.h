@@ -54,7 +54,7 @@ class Hero : public Walker
 public:
 	bool busy;
 	Hero(int x, int y, int d, const char * prefix, int count, float delay);
-	void move();
+	bool move(int d);
 };
 
 class Zombie : public Walker

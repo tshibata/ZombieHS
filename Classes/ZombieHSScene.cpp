@@ -238,9 +238,9 @@ bool ZombieHSScene::init()
 	}
 
 	// put the hero.
-	hero = new Hero(UNIT * 1, UNIT * (FLOOR_HEIGHT - 1), 3, "danshi04", 4, 0.075f);
+	hero = new Hero(UNIT * 1, UNIT * (FLOOR_HEIGHT - 1), S, "danshi04", 4, 0.075f);
 	this->addChild(hero->s, 1016 - UNIT * (FLOOR_HEIGHT - 1));
-	hero->move();
+	hero->move(S);
 
 	// prepare for key events.
 	auto listener = EventListenerKeyboard::create();
@@ -249,20 +249,20 @@ bool ZombieHSScene::init()
 		switch (keyCode)
 		{
 		case cocos2d::EventKeyboard::KeyCode::KEY_UP_ARROW:
-			arrowKeys[hero->d = N] = 1;
-			hero->move();
+			arrowKeys[N] = 1;
+			hero->move(N);
 			break;
 		case cocos2d::EventKeyboard::KeyCode::KEY_DOWN_ARROW:
-			arrowKeys[hero->d = S] = 1;
-			hero->move();
+			arrowKeys[S] = 1;
+			hero->move(S);
 			break;
 		case cocos2d::EventKeyboard::KeyCode::KEY_LEFT_ARROW:
-			arrowKeys[hero->d = W] = 1;
-			hero->move();
+			arrowKeys[W] = 1;
+			hero->move(W);
 			break;
 		case cocos2d::EventKeyboard::KeyCode::KEY_RIGHT_ARROW:
-			arrowKeys[hero->d = E] = 1;
-			hero->move();
+			arrowKeys[E] = 1;
+			hero->move(E);
 			break;
 		default: // ignore others
 			break;
