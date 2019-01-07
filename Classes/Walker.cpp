@@ -109,17 +109,17 @@ bool Hero::move(int d2)
 				auto pos = s->getPosition();
 				int x = (int) (pos.x - origin.x) / UNIT;
 				int y = (int) (pos.y - origin.y - Y_OFFSET) / UNIT;
-				if (y <= 1 && secureness <= 0)
-				{
-					Director::getInstance()->replaceScene(ZombieHSScene::create());
-					return;
-				}
 				if (traps[x][y] != nullptr)
 				{
 					if (traps[x][y]())
 					{
 						traps[x][y] = nullptr;
 					}
+				}
+				if (y <= 1 && secureness <= 0)
+				{
+					Director::getInstance()->replaceScene(ZombieHSScene::create());
+					return;
 				}
 				busy = false;
 				if (arrowKeys[turnLeft(d, 1)] != arrowKeys[turnLeft(d, -1)])

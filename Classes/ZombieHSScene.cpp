@@ -29,9 +29,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Walker.h"
 #include "ZombieHSScene.h"
 
-int stageIndex = 1;
+unsigned int level = 1;
+unsigned int stageIndex = 1;
 
-Sprite * gate;
+#define GATES_SPAN 3
+Sprite * gates[2];
 
 Hero * hero;
 
@@ -54,9 +56,9 @@ bool ZombieHSScene::init()
 	Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
 	secureness = 0;
-	char buf[10];
-	snprintf(buf, sizeof(buf), "Stage%d", stageIndex++);
-	auto label = Label::createWithTTF(buf, "fonts/arial.ttf", 24);
+	char buf[100];
+	snprintf(buf, sizeof(buf), "Level%u (Stage%u)", level, stageIndex);
+	auto label = Label::createWithTTF(buf, "fonts/arial.ttf", 20);
 	label->setTextColor(Color4B::BLACK);
 	label->setPosition(Vec2(origin.x + (7 * UNIT) + label->getContentSize().width / 2,
 		origin.y + (FLOOR_HEIGHT - 2) * UNIT + Y_OFFSET));
@@ -78,9 +80,7 @@ bool ZombieHSScene::init()
 		}
 	}
 
-	unsigned int seed = time(nullptr);
-	printf("seed: %u\n", seed);
-	srand(seed);
+	srand(stageIndex);
 
 	cells[1][FLOOR_HEIGHT - 2] = HALL;
 	dig(1, FLOOR_HEIGHT - 3);
@@ -94,20 +94,41 @@ bool ZombieHSScene::init()
 	}
 
 	// add an exit.
-	for (int x = FLOOR_WIDTH - 1;; x--)
+	for (int count = 0, x = FLOOR_WIDTH - 1;count < 2; x--)
 	{
-		if (x == 0)
+		if (x < 0)
 		{
-			// just in case. it never happens, i believe.
-			exit(1);
+			while (count < 2)
+			{
+				gates[count++] = nullptr;
+			}
+			break;
 		}
 		if (cells[x][2] == HALL)
 		{
 			cells[x][1] = HALL;
-			gate = Sprite::create("gate.png");
-			gate->setPosition(Vec2(origin.x + x * UNIT, origin.y + UNIT + Y_OFFSET));
-			this->addChild(gate, 1017 - UNIT);
-			break;
+			if (oneWayToGoRule(x, 1))
+			{
+				traps[x][1] = [count]()
+				{
+					if (secureness <= 0)
+					{
+						level++;
+						stageIndex = (stageIndex << 1) + (1 - count);
+						return true;
+					}
+					return false;
+				};
+				gates[count] = Sprite::create("gate.png");
+				gates[count]->setPosition(Vec2(origin.x + x * UNIT, origin.y + UNIT + Y_OFFSET));
+				this->addChild(gates[count], 1017 - UNIT);
+				count++;
+				x -= GATES_SPAN;
+			}
+			else
+			{
+				cells[x][1] = TBD;
+			}
 		}
 	}
 
@@ -170,7 +191,13 @@ bool ZombieHSScene::init()
 							secureness--;
 							if (secureness <= 0)
 							{
-								gate->runAction(CCFadeOut::create(0.5f));
+								for (int i = 0; i < 2; i++)
+								{
+									if (gates[i] != nullptr)
+									{
+										gates[i]->runAction(CCFadeOut::create(0.5f));
+									}
+								}
 							}
 							return true;
 						};
@@ -191,7 +218,13 @@ bool ZombieHSScene::init()
 	}
 	if (secureness <= 0)
 	{
-		gate->setVisible(false);
+		for (int i = 0; i < 2; i++)
+		{
+			if (gates[i] != nullptr)
+			{
+				gates[i]->setVisible(false);
+			}
+		}
 	}
 
 	// display the weapons.
