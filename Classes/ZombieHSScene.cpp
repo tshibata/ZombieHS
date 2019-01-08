@@ -25,6 +25,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include "IndieRandom.h"
 #include "Util.h"
 #include "Walker.h"
 #include "ZombieHSScene.h"
@@ -80,17 +81,17 @@ bool ZombieHSScene::init()
 		}
 	}
 
-	srand(stageIndex);
+	IndieRandom rand(stageIndex);
 
 	cells[1][FLOOR_HEIGHT - 2] = HALL;
-	dig(1, FLOOR_HEIGHT - 3);
+	dig(1, FLOOR_HEIGHT - 3, rand);
 
 	// so far there is no circular route.
 
 	// add bypasses.
 	for (int i = 0; i < 100; i++)
 	{
-		digBypass();
+		digBypass(rand);
 	}
 
 	// add an exit.
@@ -166,7 +167,7 @@ bool ZombieHSScene::init()
 				}
 				if (oneWayToGoRule(x, y) && 1 < y && y < FLOOR_HEIGHT - 2)
 				{
-					if (rand() % 2 < 1)
+					if (rand.next() % 2 < 1)
 					{
 						auto sprite = Sprite::create("knife.png");
 						traps[x][y] = [sprite]()
@@ -253,12 +254,12 @@ bool ZombieHSScene::init()
 	{
 		while (true)
 		{
-			int x = rand() % (FLOOR_WIDTH - 2) + 1;
-			int y = rand() % (FLOOR_HEIGHT - 2) + 1;
+			int x = rand.next() % (FLOOR_WIDTH - 2) + 1;
+			int y = rand.next() % (FLOOR_HEIGHT - 2) + 1;
 			if (cells[x - 1][y] != WALL && cells[x][y] != WALL && cells[x + 1][y] != WALL)
 			{
 			 	if ((density[x - 1][y] == 0 && density[x][y] == 0 && density[x + 1][y] == 0)
-				 || rand() % 10 == 0 /* rarely crouded */)
+				 || rand.next() % 10 == 0 /* rarely crouded */)
 				{
 					mobs[i] = new Zombie(UNIT * x, UNIT * y, 0, mobPlists[i], 4, 0.05f);
 					this->addChild(mobs[i]->s, 1016 - UNIT * y);

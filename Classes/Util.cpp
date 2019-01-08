@@ -25,6 +25,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include "IndieRandom.h"
 #include "Util.h"
 
 int cos4R[] = {+1, 0, -1, 0};
@@ -95,7 +96,7 @@ bool oneWayToGoRule(int x, int y)
 	return count == 1;
 }
 
-void dig(int x, int y)
+void dig(int x, int y, IndieRandom & rand)
 {
 	if (cells[x][y] == TBD)
 	{
@@ -105,8 +106,8 @@ void dig(int x, int y)
 			int dirs[] = {0, 1, 2, 3};
 			for (int i = 4; 0 < i; i--)
 			{
-				int r = rand() % i;
-				dig(x + cos4R[dirs[r]], y + sin4R[dirs[r]]);
+				int r = rand.next() % i;
+				dig(x + cos4R[dirs[r]], y + sin4R[dirs[r]], rand);
 				dirs[r] = dirs[i - 1];
 			}
 		}
@@ -117,10 +118,10 @@ void dig(int x, int y)
 	}
 }
 
-bool digBypass()
+bool digBypass(IndieRandom & rand)
 {
-	int x = rand() % (FLOOR_WIDTH - 2) + 1;
-	int y = rand() % (FLOOR_HEIGHT - 2) + 1;
+	int x = rand.next() % (FLOOR_WIDTH - 2) + 1;
+	int y = rand.next() % (FLOOR_HEIGHT - 2) + 1;
 	if (cells[x][y] == TBD && noMoreNoLessRule(x, y))
 	{
 		cells[x][y] = 1;

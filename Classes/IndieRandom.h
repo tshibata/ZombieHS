@@ -25,73 +25,21 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
-#ifndef __ZOMBIE_HS__UTIL_H__
-#define __ZOMBIE_HS__UTIL_H__
-
-#include "cocos2d.h"
-USING_NS_CC;
-
-#define FLOOR_WIDTH 17
-#define FLOOR_HEIGHT 13
-
-#define UNIT 30
-
-#define Y_OFFSET (-30)
-
-#define E 0 // east
-#define N 1 // north
-#define W 2 // west
-#define S 3 // south
-
-#define TBD (-1) // to be determined
-#define WALL 0 // not able to go through
-#define HALL 1 // able to go through
-
-extern int cos4R[4]; // cosine for R
-extern int sin4R[4]; // sine for R
+#ifndef __ZOMBIE_HS__INDIE_RANDOM_H__
+#define __ZOMBIE_HS__INDIE_RANDOM_H__
 
 /*
- * direction of a relative coordinate.
+ * platform independent random number generator.
  */
-int direction(int dx, int dy);
+class IndieRandom
+{
+private:
+	unsigned long int seed;
+public:
+	IndieRandom(unsigned long int seed);
+	IndieRandom(unsigned int seed);
+	virtual ~IndieRandom();
+	unsigned int next();
+};
 
-/*
- * direction of the left hand, or the right when offset is negative.
- */
-int turnLeft(int origin, int offset);
-
-/*
- * check if it is
- * - not a part of wide room or thick wall
- * - not by a thin point of wall
- */
-bool noMoreNoLessRule(int x, int y);
-
-/*
- * check if there is only one passage around.
- */
-bool oneWayToGoRule(int x, int y);
-
-/*
- * make passages without bypass.
- */
-void dig(int x, int y, IndieRandom & rand);
-
-/*
- * try to make a bypass.
- */
-bool digBypass(IndieRandom & rand);
-
-/*
- * -1: to be determined
- * 0: wall
- * 1: passage
- */
-extern char cells[FLOOR_WIDTH][FLOOR_HEIGHT];
-
-/*
- * reactions against the hero.
- */
-extern std::function<bool()> traps[FLOOR_WIDTH][FLOOR_HEIGHT];
-
-#endif // __ZOMBIE_HS__UTIL_H__
+#endif // __ZOMBIE_HS__INDIE_RANDOM_H__

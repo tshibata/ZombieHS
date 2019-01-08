@@ -55,12 +55,14 @@ include_directories(
 # add cross-platforms source files and header files 
 list(APPEND GAME_SOURCE
      Classes/AppDelegate.cpp
-     Classes/Walker.cpp
+     Classes/IndieRandom.cpp
      Classes/Util.cpp
+     Classes/Walker.cpp
      Classes/ZombieHSScene.cpp
      )
 list(APPEND GAME_HEADER
      Classes/AppDelegate.h
+     Classes/IndieRandom.h
      Classes/Util.h
      Classes/Walker.h
      Classes/ZombieHSScene.h
