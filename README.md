@@ -12,9 +12,7 @@ $ python download-deps.py
 $ popd
 
 ## How to run
-$ source setenv.sh
-
-$ cocos run -p linux
+$ ./run-linux.sh
 
 ## License
 BSD 3-clause license except for files from others. (See "Thanks")
