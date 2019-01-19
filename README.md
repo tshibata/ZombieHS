@@ -3,6 +3,18 @@
 Well, I just wanted to give cocos2d-x a try.
 I guess it is portable but I verified only on Linux.
 ## How to set up
+You need following packages installed:
+- git
+- g++
+- cmake
+- python
+- libglew-dev
+- libgtk-3-dev
+- libsqlite3-dev
+- libcurl4-gnutls-dev
+
+Then execute following commands:
+
 $ git submodule update --init --recursive --progress
 
 $ pushd cocos2d/
