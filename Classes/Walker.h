@@ -64,4 +64,13 @@ public:
 	void move();
 };
 
+class Stalker : public Walker
+{
+private:
+	Sprite * target;
+public:
+	Stalker(Sprite * target, int x, int y, int d, const char * prefix, int count, float delay);
+	void move();
+};
+
 #endif // __ZOMBIE_HS__WALKER_H__

@@ -195,3 +195,44 @@ void Zombie::move()
 	}
 }
 
+Stalker::Stalker(Sprite * target, int x, int y, int d, const char * prefix, int count, float delay) : Walker(x, y, d, prefix, count, delay)
+{
+	this->target = target;
+}
+
+void Stalker::move()
+{
+	auto origin = Director::getInstance()->getVisibleOrigin();
+	auto pos = s->getPosition();
+	int x = (int) (pos.x - origin.x) / UNIT;
+	int y = (int) (pos.y - origin.y - Y_OFFSET) / UNIT;
+	if ((int) pos.x % UNIT == 0 && (int) pos.y % UNIT == 0)
+	{
+		int x2 = (int) (target->getPosition().x - origin.x) / UNIT;
+		int y2 = (int) (target->getPosition().y - origin.y - Y_OFFSET) / UNIT;
+		d = navigate(x, y, x2, y2);
+	}
+	auto animation = a[d];
+	if (rand() % 2)
+	{
+		s->runAction(Sequence::create(
+			Spawn::create(
+				Animate::create(animation),
+				MoveBy::create(animation->getDuration(), Vec2((UNIT / 2) * cos4R[d], (UNIT / 2) * sin4R[d])),
+				nullptr),
+			CallFunc::create([this]() {
+				move();
+			}),
+			nullptr));
+	}
+	else
+	{
+		s->runAction(Sequence::create(
+			DelayTime::create(animation->getDuration()),
+			CallFunc::create([this]() {
+				move();
+			}),
+			nullptr));
+	}
+}
+
