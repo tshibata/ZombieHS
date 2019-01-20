@@ -25,6 +25,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
 
+#include <queue>
 #include "IndieRandom.h"
 #include "Util.h"
 
@@ -132,5 +133,34 @@ bool digBypass(IndieRandom & rand)
 		}
 	}
 	return true;
+}
+
+int navigate(int x1, int y1, int x2, int y2)
+{
+	std::queue<std::pair<int, int>> border;
+	bool inside[FLOOR_WIDTH][FLOOR_HEIGHT] = {false};
+	std::pair<int, int> goal(x2, y2);
+	border.push(goal);
+	while (true)
+	{
+		std::pair<int, int> point = border.front();
+		border.pop();
+		inside[point.first][point.second] = true;
+		for (int i = 0; i < 4; i++)
+		{
+			int x = point.first + cos4R[i];
+			int y = point.second + sin4R[i];
+			if (x == x1 && y == y1)
+			{
+				return turnLeft(i, 2);
+			}
+			if (cells[x][y] == HALL && ! inside[x][y])
+			{
+				std::pair<int, int> step(x, y);
+				border.push(step);
+			}
+		}
+	}
+	return 0;
 }
 

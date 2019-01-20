@@ -83,6 +83,11 @@ void dig(int x, int y, IndieRandom & rand);
 bool digBypass(IndieRandom & rand);
 
 /*
+ * direction from a point to another point.
+ */
+int navigate(int x1, int y1, int x2, int y2);
+
+/*
  * -1: to be determined
  * 0: wall
  * 1: passage
