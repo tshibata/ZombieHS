@@ -34,11 +34,14 @@ unsigned int level = 1;
 unsigned int stageIndex = 1;
 
 #define GATES_SPAN 3
+
 Sprite * gates[2];
 
 Hero * hero;
 
 Zombie * mobs[4];
+
+Stalker * stalker;
 
 const char * mobPlists[] = {
 	"danshi01",
@@ -62,7 +65,7 @@ bool ZombieHSScene::init()
 	auto label = Label::createWithTTF(buf, "fonts/arial.ttf", 20);
 	label->setTextColor(Color4B::BLACK);
 	label->setPosition(Vec2(origin.x + (7 * UNIT) + label->getContentSize().width / 2,
-		origin.y + (FLOOR_HEIGHT - 2) * UNIT + Y_OFFSET));
+		origin.y + (FLOOR_HEIGHT - 4) * UNIT + Y_OFFSET));
 	this->addChild(label, 1000);
 
 	for (int y = 0; y < FLOOR_HEIGHT; y++)
@@ -73,9 +76,9 @@ bool ZombieHSScene::init()
 			traps[x][y] = nullptr;
 		}
 	}
-	for (int y = 2; y < FLOOR_HEIGHT - 2; y++)
+	for (int y = 2; y < FLOOR_HEIGHT - 4; y++)
 	{
-		for (int x = 1; x < FLOOR_WIDTH - 1; x++)
+		for (int x = 1; x < FLOOR_WIDTH - 2; x++)
 		{
 			cells[x][y] = TBD;
 		}
@@ -83,8 +86,8 @@ bool ZombieHSScene::init()
 
 	IndieRandom rand(stageIndex);
 
-	cells[1][FLOOR_HEIGHT - 2] = HALL;
-	dig(1, FLOOR_HEIGHT - 3, rand);
+	cells[1][FLOOR_HEIGHT - 4] = HALL;
+	dig(1, FLOOR_HEIGHT - 5, rand);
 
 	// so far there is no circular route.
 
@@ -145,27 +148,58 @@ bool ZombieHSScene::init()
 		}
 	}
 
-	// display the floor map.
-	for (int y = 0; y < FLOOR_HEIGHT - 1; y++)
+
+	// put the hero.
+	hero = new Hero(UNIT * 1, UNIT * (FLOOR_HEIGHT - 3), S, "danshi04", 4, 0.075f);
+	this->addChild(hero->s, 1016 - UNIT * (FLOOR_HEIGHT - 2));
+	hero->move(S);
+
+	// put the zombies.
+	int density[FLOOR_WIDTH][FLOOR_HEIGHT];
+	for (int y = 0; y < FLOOR_HEIGHT; y++)
 	{
 		for (int x = 0; x < FLOOR_WIDTH; x++)
 		{
-			switch (cells[x][y])
+			density[x][y] = 0;
+		}
+	}
+	for (int i = 0; i < 4; i++)
+	{
+		while (true)
+		{
+			int x = rand.next() % (FLOOR_WIDTH - 2) + 1;
+			int y = rand.next() % (FLOOR_HEIGHT - 2) + 1;
+			if (cells[x - 1][y] != WALL && cells[x][y] != WALL && cells[x + 1][y] != WALL)
 			{
-			case WALL:
+				if ((density[x - 1][y] == 0 && density[x][y] == 0 && density[x + 1][y] == 0)
+				 || rand.next() % 10 == 0 /* rarely crouded */)
 				{
-					auto sprite = Sprite::create("wall.png");
-					sprite->setPosition(Vec2(origin.x + x * UNIT, origin.y + y * UNIT + Y_OFFSET));
-					this->addChild(sprite, 1000 - y * UNIT);
+					mobs[i] = new Zombie(UNIT * x, UNIT * y, 0, mobPlists[i], 4, 0.05f);
+					this->addChild(mobs[i]->s, 1016 - UNIT * y);
+					mobs[i]->move();
+					density[x][y]++;
+					break;
 				}
-				break;
-			case HALL:
-				{
-					auto sprite = Sprite::create("floor.png");
-					sprite->setPosition(Vec2(origin.x + x * UNIT, origin.y + y * UNIT + Y_OFFSET));
-					this->addChild(sprite, 1000 - y * UNIT);
-				}
-				if (oneWayToGoRule(x, y) && 1 < y && y < FLOOR_HEIGHT - 2)
+			}
+		}
+	}
+
+	// path behind
+	for (int x = 1; x < FLOOR_WIDTH - 1; x++)
+	{
+		cells[x][FLOOR_HEIGHT - 3] = HALL;
+	}
+
+	stalker = new Stalker(hero->s, UNIT * (FLOOR_WIDTH - 2), UNIT * (FLOOR_HEIGHT - 3), W, "danshi02", 4, 0.05f);
+	this->addChild(stalker->s, 1016 - UNIT * (FLOOR_HEIGHT - 2));
+	stalker->move();
+
+	// items
+	for (int y = 0; y < FLOOR_HEIGHT - 3; y++)
+	{
+		for (int x = 0; x < FLOOR_WIDTH; x++)
+		{
+				if (cells[x][y] == HALL && oneWayToGoRule(x, y) && 1 < y && y < FLOOR_HEIGHT - 2)
 				{
 					if (rand.next() % 2 < 1)
 					{
@@ -207,16 +241,34 @@ bool ZombieHSScene::init()
 						secureness++;
 					}
 				}
+		}
+	}
+
+	// display the floor map.
+	for (int y = 0; y < FLOOR_HEIGHT - 1; y++)
+	{
+		for (int x = 0; x < FLOOR_WIDTH; x++)
+		{
+			switch (cells[x][y])
+			{
+			case WALL:
+				{
+					auto sprite = Sprite::create("wall.png");
+					sprite->setPosition(Vec2(origin.x + x * UNIT, origin.y + y * UNIT + Y_OFFSET));
+					this->addChild(sprite, 1000 - y * UNIT);
+				}
+				break;
+			case HALL:
+				{
+					auto sprite = Sprite::create("floor.png");
+					sprite->setPosition(Vec2(origin.x + x * UNIT, origin.y + y * UNIT + Y_OFFSET));
+					this->addChild(sprite, 1000 - y * UNIT);
+				}
 				break;
 			}
 		}
 	}
-	for (int x = 0; x < FLOOR_WIDTH; x++)
-	{
-		auto sprite = Sprite::create("floor.png");
-		sprite->setPosition(Vec2(origin.x + x * UNIT, origin.y + (FLOOR_HEIGHT - 1) * UNIT + Y_OFFSET));
-		this->addChild(sprite, 1000 - (FLOOR_HEIGHT - 1) * UNIT);
-	}
+
 	if (secureness <= 0)
 	{
 		for (int i = 0; i < 2; i++)
@@ -232,7 +284,7 @@ bool ZombieHSScene::init()
 	for (int i = 0; i < MAX_ARSENAL; i ++)
 	{
 		knives[i] = Sprite::create("knife.png");
-		knives[i]->setPosition(Vec2(origin.x + (i + 4) * (UNIT / 2), origin.y + (FLOOR_HEIGHT - 2) * UNIT + Y_OFFSET));
+		knives[i]->setPosition(Vec2(origin.x + (i + 4) * (UNIT / 2), origin.y + (FLOOR_HEIGHT - 4) * UNIT + Y_OFFSET));
 		knives[i]->setVisible(false);
 		this->addChild(knives[i], 1000);
 	}
@@ -240,41 +292,6 @@ bool ZombieHSScene::init()
 	{
 		knives[i]->setVisible(true);
 	}
-
-	// put the zombies.
-	int density[FLOOR_WIDTH][FLOOR_HEIGHT];
-	for (int y = 0; y < FLOOR_HEIGHT; y++)
-	{
-		for (int x = 0; x < FLOOR_WIDTH; x++)
-		{
-			density[x][y] = 0;
-		}
-	}
-	for (int i = 0; i < 4; i++)
-	{
-		while (true)
-		{
-			int x = rand.next() % (FLOOR_WIDTH - 2) + 1;
-			int y = rand.next() % (FLOOR_HEIGHT - 2) + 1;
-			if (cells[x - 1][y] != WALL && cells[x][y] != WALL && cells[x + 1][y] != WALL)
-			{
-			 	if ((density[x - 1][y] == 0 && density[x][y] == 0 && density[x + 1][y] == 0)
-				 || rand.next() % 10 == 0 /* rarely crouded */)
-				{
-					mobs[i] = new Zombie(UNIT * x, UNIT * y, 0, mobPlists[i], 4, 0.05f);
-					this->addChild(mobs[i]->s, 1016 - UNIT * y);
-					mobs[i]->move();
-					density[x][y]++;
-					break;
-				}
-			}
-		}
-	}
-
-	// put the hero.
-	hero = new Hero(UNIT * 1, UNIT * (FLOOR_HEIGHT - 1), S, "danshi04", 4, 0.075f);
-	this->addChild(hero->s, 1016 - UNIT * (FLOOR_HEIGHT - 1));
-	hero->move(S);
 
 	// prepare for key events.
 	auto listener = EventListenerKeyboard::create();
@@ -334,27 +351,40 @@ bool ZombieHSScene::init()
 	return true;
 }
 
-void ZombieHSScene::update(float delta)
+void zoom(Sprite * s)
+{
+	auto v1 = s->getPosition();
+	s->setLocalZOrder(1016 - ((int) v1.y - Y_OFFSET));
+}
+
+void grope(Sprite * s)
 {
 	auto v1 = hero->s->getPosition();
-	hero->s->setLocalZOrder(1016 - ((int) v1.y - Y_OFFSET));
+	auto v2 = s->getPosition();
+	if (s->isVisible() && abs(v1.x - v2.x) + abs(v1.y - v2.y) < UNIT / 2)
+	{
+		if (0 < arsenal)
+		{
+			knives[-- arsenal]->setVisible(false);
+			s->setVisible(false);
+			// invisible zombie keeps walking. don't mind.
+		}
+		else
+		{
+			Director::getInstance()->end();
+			// There seems to be something to care about in case of iOS...
+		}
+	}
+}
+
+void ZombieHSScene::update(float delta)
+{
+	zoom(hero->s);
+	zoom(stalker->s);
+	grope(stalker->s);
 	for (int i = 0; i < 4; i++)
 	{
-		auto v2 = mobs[i]->s->getPosition();
-		mobs[i]->s->setLocalZOrder(1016 - ((int) v2.y - Y_OFFSET));
-		if (mobs[i]->s->isVisible() && abs(v1.x - v2.x) + abs(v1.y - v2.y) < UNIT / 2)
-		{
-			if (0 < arsenal)
-			{
-				knives[-- arsenal]->setVisible(false);
-				mobs[i]->s->setVisible(false);
-				// invisible zombie keeps walking. don't mind.
-			}
-			else
-			{
-				Director::getInstance()->end();
-				// There seems to be something to care about in case of iOS...
-			}
-		}
+		zoom(mobs[i]->s);
+		grope(mobs[i]->s);
 	}
 }
