@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 unsigned int level = 1;
 unsigned int stageIndex = 1;
+unsigned int duration = 100;
 
 #define GATES_SPAN 3
 
@@ -67,6 +68,13 @@ bool ZombieHSScene::init()
 	label->setPosition(Vec2(origin.x + (7 * UNIT) + label->getContentSize().width / 2,
 		origin.y + (FLOOR_HEIGHT - 4) * UNIT + Y_OFFSET));
 	this->addChild(label, 1000);
+
+	timer = Label::createWithTTF("", "fonts/arial.ttf", 20);
+	timer->setTextColor(Color4B::BLACK);
+	timer->setPosition(Vec2(origin.x + (15 * UNIT),
+		origin.y + (FLOOR_HEIGHT - 4) * UNIT + Y_OFFSET));
+	this->addChild(timer, 1000);
+	tick(0);
 
 	for (int y = 0; y < FLOOR_HEIGHT; y++)
 	{
@@ -201,7 +209,7 @@ bool ZombieHSScene::init()
 		{
 				if (cells[x][y] == HALL && oneWayToGoRule(x, y) && 1 < y && y < FLOOR_HEIGHT - 2)
 				{
-					if (rand.next() % 2 < 1)
+					if (rand.next() % 10 < 2)
 					{
 						auto sprite = Sprite::create("knife.png");
 						traps[x][y] = [sprite]()
@@ -217,7 +225,7 @@ bool ZombieHSScene::init()
 						sprite->setPosition(Vec2(origin.x + x * UNIT, origin.y + y * UNIT + Y_OFFSET));
 						this->addChild(sprite, 1001 - y * UNIT);
 					}
-					else
+					else if (rand.next() % 8 < 3)
 					{
 						auto sprite = Sprite::create("key.png");
 						traps[x][y] = [sprite]()
@@ -239,6 +247,18 @@ bool ZombieHSScene::init()
 						sprite->setPosition(Vec2(origin.x + x * UNIT, origin.y + y * UNIT + Y_OFFSET));
 						this->addChild(sprite, 1001 - y * UNIT);
 						secureness++;
+					}
+					else
+					{
+						auto sprite = Sprite::create("pill.png");
+						traps[x][y] = [this, sprite]()
+						{
+							tick(- 10);
+							sprite->setVisible(false);
+							return true;
+						};
+						sprite->setPosition(Vec2(origin.x + x * UNIT, origin.y + y * UNIT + Y_OFFSET));
+						this->addChild(sprite, 1001 - y * UNIT);
 					}
 				}
 		}
@@ -347,6 +367,7 @@ bool ZombieHSScene::init()
 	getEventDispatcher()->addEventListenerWithSceneGraphPriority(listener, this);
 
 	scheduleUpdate();
+	schedule(CC_SCHEDULE_SELECTOR(ZombieHSScene::tick), 1.0f);
 
 	return true;
 }
@@ -386,5 +407,34 @@ void ZombieHSScene::update(float delta)
 	{
 		zoom(mobs[i]->s);
 		grope(mobs[i]->s);
+	}
+}
+
+void ZombieHSScene::tick(float delta)
+{
+	duration -= (int) delta;
+	if (0 < duration)
+	{
+		char buf[10];
+		snprintf(buf, sizeof(buf), "%u:%u%u", duration / 60, duration % 60 / 10, duration % 10);
+		timer->setString(buf);
+		if (0 <= delta)
+		{
+			timer->setScale(1.0f);
+			timer->setOpacity(255);
+			if (duration <= 10)
+			{
+				timer->runAction(Spawn::create(CCFadeOut::create(1.0f), CCScaleTo::create(1.0f, 2.0f), nullptr));
+			}
+			else
+			{
+				timer->runAction(CCFadeOut::create(1.0f));
+			}
+		}
+	}
+	else
+	{
+		Director::getInstance()->end();
+		// There seems to be something to care about in case of iOS...
 	}
 }

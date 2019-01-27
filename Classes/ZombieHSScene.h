@@ -33,9 +33,12 @@ USING_NS_CC;
 
 class ZombieHSScene : public cocos2d::Scene
 {
+private:
+	Label * timer;
 public:
 	virtual bool init();
 	void update(float delta);
+	void tick(float delta);
 	CREATE_FUNC(ZombieHSScene);
 };
 
