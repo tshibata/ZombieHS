@@ -30,13 +30,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "cocos2d.h"
 USING_NS_CC;
+#include "Walker.h"
 
 class ZombieHSScene : public cocos2d::Scene
 {
 private:
 	Label * timer;
+	Hero * hero;
+	Zombie * mobs[4];
+	Stalker * stalker;
+	void grope(Sprite * s);
 public:
 	virtual bool init();
+	virtual void cleanup();
 	void update(float delta);
 	void tick(float delta);
 	CREATE_FUNC(ZombieHSScene);

@@ -27,7 +27,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "IndieRandom.h"
 #include "Util.h"
-#include "Walker.h"
 #include "ZombieHSScene.h"
 
 unsigned int level = 1;
@@ -37,12 +36,6 @@ unsigned int duration = 100;
 #define GATES_SPAN 3
 
 Sprite * gates[2];
-
-Hero * hero;
-
-Zombie * mobs[4];
-
-Stalker * stalker;
 
 const char * mobPlists[] = {
 	"danshi01",
@@ -378,7 +371,7 @@ void zoom(Sprite * s)
 	s->setLocalZOrder(1016 - ((int) v1.y - Y_OFFSET));
 }
 
-void grope(Sprite * s)
+void ZombieHSScene::grope(Sprite * s)
 {
 	auto v1 = hero->s->getPosition();
 	auto v2 = s->getPosition();
@@ -437,4 +430,14 @@ void ZombieHSScene::tick(float delta)
 		Director::getInstance()->end();
 		// There seems to be something to care about in case of iOS...
 	}
+}
+
+void ZombieHSScene::cleanup()
+{
+	delete hero;
+	for (int i = 0; i < 4; i++)
+	{
+		delete mobs[i];
+	}
+	delete stalker;
 }
