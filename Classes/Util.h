@@ -36,7 +36,7 @@ USING_NS_CC;
 
 #define UNIT 30
 
-#define Y_OFFSET (-30)
+#define Y_OFFSET (-35)
 
 #define E 0 // east
 #define N 1 // north
