@@ -206,7 +206,7 @@ void Stalker::move()
 	auto pos = s->getPosition();
 	int x = (int) (pos.x - origin.x) / UNIT;
 	int y = (int) (pos.y - origin.y - Y_OFFSET) / UNIT;
-	if ((int) pos.x % UNIT == 0 && (int) pos.y % UNIT == 0)
+	if ((int) (pos.x - origin.x) % UNIT == 0 && (int) (pos.y - origin.y - Y_OFFSET) % UNIT == 0)
 	{
 		int x2 = (int) (target->getPosition().x - origin.x) / UNIT;
 		int y2 = (int) (target->getPosition().y - origin.y - Y_OFFSET) / UNIT;
